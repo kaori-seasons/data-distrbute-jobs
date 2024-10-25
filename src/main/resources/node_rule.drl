@@ -1,0 +1,16 @@
+
+//定义规则的名称
+rule "rule1"
+
+//如果配置中的实例等于kafka中时间流产生的实例信息
+when
+    $p:Event( e.instance_id == conf.instance_id)
+    $e:Conf( e.node_id = event.node_id )
+
+//插入相关的算法结果
+then
+    if($p.isResult==True){
+        $p.setCollects(e.collects)
+    } else{
+        System.out.println("算法结果已经输出")
+    }

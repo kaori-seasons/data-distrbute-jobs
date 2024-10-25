@@ -1,0 +1,16 @@
+package com.sucheon.jobs.rules
+
+import java.util.List
+import java.util.ArrayList
+
+rule "rule1"
+
+when
+   $d:EventBean(origin == "iot-data")
+   $e:EventBean(origin == "alg-data")
+then
+    List<String> list =  $d.getTopicList()
+    list.add("ck_iot_main")
+    List<String> result = $e.getTopicList()
+    result.add("ck_alg_main")
+end
