@@ -31,7 +31,7 @@ public class KafkaSourceBuilder {
     }
 
 
-    public KafkaSource<String> newBuild(String topic, String groupId){
+    public KafkaSource<String> newBuild(String topic, String groupId, Properties properties){
 
 
         // serialization / deserialization schemas for writing and consuming the extra records
@@ -42,9 +42,12 @@ public class KafkaSourceBuilder {
                 new KafkaDeserializationSchemaWrapper<>(
                         new TypeInformationSerializationSchema<>(
                                 resultType, new ExecutionConfig()));
+        Object value = properties.get(ConfigNames.KAFKA_BOOTSTRAP_SERVERS);
+
+        String bootstrapServer = (String) value;
 
         KafkaSource<String> source = KafkaSource.<String>builder()
-                .setBootstrapServers(ConfigNames.KAFKA_BOOTSTRAP_SERVERS)
+                .setBootstrapServers(bootstrapServer)
                 .setTopicPattern(Pattern.compile(topic))
                 .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
@@ -91,7 +94,7 @@ public class KafkaSourceBuilder {
 
         Properties props = new Properties();
         props.setProperty("bootstrap.servers","192.168.3.48:30092");
-        props.setProperty("auto.offset.reset", "true");
+        props.setProperty("auto.offset.reset", "earliest");
 
         FlinkKafkaConsumer<String> kafkaConsumer = new FlinkKafkaConsumer<>(topic, new SimpleStringSchema(), props);
 

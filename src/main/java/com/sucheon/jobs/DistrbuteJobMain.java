@@ -40,7 +40,7 @@ import java.util.Properties;
 public class DistrbuteJobMain {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         /**
          *
@@ -68,13 +68,17 @@ public class DistrbuteJobMain {
          *
          */
 
+        Properties properties = new Properties();
+        properties.setProperty("bootstrap.servers","192.168.3.48:30092");
+        properties.setProperty("auto.offset.reset", "true");
+
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.setParallelism(1);
 
         KafkaSourceBuilder kafkaSourceBuilder = new KafkaSourceBuilder();
-        DataStream<String> algResult = env.fromSource(kafkaSourceBuilder.newBuild("iot_kv_main", "test1"), WatermarkStrategy.noWatermarks(), "iot-data");
+        DataStream<String> algResult = env.fromSource(kafkaSourceBuilder.newBuild("iot_kv_main", "test1", properties), WatermarkStrategy.noWatermarks(), "iot-data");
         algResult =  algResult.map(new LabelAlgResultMapFunction());
-        DataStream<String> iotResult = env.fromSource(kafkaSourceBuilder.newBuild("alg_kv_main", "test1"), WatermarkStrategy.noWatermarks(), "alg-data");
+        DataStream<String> iotResult = env.fromSource(kafkaSourceBuilder.newBuild("alg_kv_main", "test1", properties), WatermarkStrategy.noWatermarks(), "alg-data");
         iotResult = iotResult.map(new LabelIotResultMapFunction());
         algResult = algResult.union(iotResult);
         //json解析
@@ -136,9 +140,6 @@ public class DistrbuteJobMain {
             }
         };
 
-        Properties properties = new Properties();
-        properties.setProperty("bootstrap.servers","localhost:9092");
-        properties.setProperty("auto.offset.reset", "true");
 
         //todo需要维护每个topic分发到每个分区的逻辑嘛 通过hash打散还是重平衡
         FlinkKafkaMutliSink distrbuteSink = new FlinkKafkaMutliSink("default-topic", routeDistrute, properties, new CustomPartitioner(new HashMap<String, Integer>()));
@@ -146,7 +147,7 @@ public class DistrbuteJobMain {
         //匹配的算法结果输出到kafka
         ruleMatchResultDataStream.addSink(distrbuteSink);
 
-
+        env.execute();
 
     }
 }
