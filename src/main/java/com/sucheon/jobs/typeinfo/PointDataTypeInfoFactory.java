@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * 将kafka接受到的pojo对象进行类型兼容
  */
-public class KafkaTypeInfoFactory extends TypeInfoFactory<PointData> {
+public class PointDataTypeInfoFactory extends TypeInfoFactory<PointData> {
     @Override
     public TypeInformation<PointData> createTypeInfo(
             Type t, Map<String, TypeInformation<?>> genericParameters) {
@@ -24,7 +24,24 @@ public class KafkaTypeInfoFactory extends TypeInfoFactory<PointData> {
             put("pageBatchID", Types.STRING);
             put("time", Types.LONG);
             put("deviceTimestamp", Types.SQL_TIMESTAMP);
-            // ...
+            put("deviceTime", Types.LOCAL_DATE);
+            put("bandSpectrum", Types.STRING);
+            put("mean", Types.INT);
+            put("meanHf", Types.STRING);
+            put("meanLf", Types.STRING);
+            put("peakFreqs", Types.STRING);
+            put("peakPowers", Types.STRING);
+            put("std", Types.STRING);
+            put("speed", Types.STRING);
+            put("originalVibrate", Types.STRING);
+            put("status", Types.INT);
+            put("feature1", Types.STRING);
+            put("feature2", Types.STRING);
+            put("feature3", Types.STRING);
+            put("feature4", Types.STRING);
+            put("customFeature", Types.STRING);
+            put("version", Types.INT);
+            put("temperature", Types.INT);
         } } );
     }
 }

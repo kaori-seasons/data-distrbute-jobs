@@ -1,8 +1,10 @@
 package com.sucheon.jobs.event;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.sucheon.jobs.typeinfo.PointTreeTypeInfoFactory;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.flink.api.common.typeinfo.TypeInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -10,6 +12,7 @@ import java.util.Map;
 /**
  * 点位树(来自用户配置的规则)
  */
+@TypeInfo(PointTreeTypeInfoFactory.class)
 @Getter
 @Setter
 public class PointTree {

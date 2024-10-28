@@ -1,6 +1,8 @@
 package com.sucheon.jobs.event;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.sucheon.jobs.typeinfo.EventBeanTypeInfoFactory;
+import org.apache.flink.api.common.typeinfo.TypeInfo;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -9,6 +11,7 @@ import java.util.List;
 /**
  * 需要用JsonfieldConverter转换下划线
  */
+@TypeInfo(EventBeanTypeInfoFactory.class)
 public class EventBean {
 
 

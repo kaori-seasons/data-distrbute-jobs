@@ -1,19 +1,18 @@
 package com.sucheon.jobs.event;
 
-import com.sucheon.jobs.typeinfo.KafkaTypeInfoFactory;
+import com.sucheon.jobs.typeinfo.PointDataTypeInfoFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.flink.api.common.typeinfo.TypeInfo;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 
 /**
  * 测点数据
  */
-@TypeInfo(KafkaTypeInfoFactory.class)
+@TypeInfo(PointDataTypeInfoFactory.class)
 @Getter
 @Setter
 public class PointData extends EventBean{

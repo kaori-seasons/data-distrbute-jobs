@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class DynamicKeyedBean {
 
     /**
-     * 多个code的点位树编码 code1, code2, code3....
+     * 多个code的点位书编码 code1, code2, code3....
      */
     private String keyValue;
 
