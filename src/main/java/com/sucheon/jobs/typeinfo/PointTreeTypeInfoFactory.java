@@ -24,9 +24,9 @@ public class PointTreeTypeInfoFactory extends TypeInfoFactory<PointTree> {
     public TypeInformation<PointTree> createTypeInfo(Type type, Map<String, TypeInformation<?>> map) {
         return Types.POJO(PointTree.class, new HashMap<String, TypeInformation<?>>() { {
             put("code", Types.STRING);
-            put("fieldList", TypeInformation.of(new TypeHint<Tuple4<String, String, String, String>>(){}));
+            put("fields", TypeInformation.of(new TypeHint<List<AlgFieldList>>(){}));
             put("timestamp", Types.LONG);
-            put("topicList", TypeInformation.of(new TypeHint<String>(){}));
+            put("topicList", TypeInformation.of(new TypeHint<List<String>>(){}));
             put("algGroup", Types.STRING);
         } } );
     }

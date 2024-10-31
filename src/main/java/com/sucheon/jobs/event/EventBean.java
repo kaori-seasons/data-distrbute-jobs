@@ -1,18 +1,17 @@
 package com.sucheon.jobs.event;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.sucheon.jobs.typeinfo.EventBeanTypeInfoFactory;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.flink.api.common.typeinfo.TypeInfo;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * 需要用JsonfieldConverter转换下划线
  */
-@TypeInfo(EventBeanTypeInfoFactory.class)
-public class EventBean {
+public class EventBean implements Serializable {
 
 
     /**
@@ -31,7 +30,7 @@ public class EventBean {
      * 设备已经进入kafka的处理时间 (上游必传字段)
      */
     @JsonProperty(value = "device_timestamp")
-    private String deviceTimestamp;
+    private Long deviceTimestamp;
 
 
     /**
@@ -43,19 +42,20 @@ public class EventBean {
     /**
      * 区分上送数据的来源 (在上送数据的时候不需要序列化)
      */
-    @JsonIgnore
+    @JsonInclude(value = JsonInclude.Include.NON_NULL)
     private String origin;
 
     /**
      * 分发的点位编码 在算法的配置字典中维护 (在上送数据的时候不需要序列化)
      */
-    @JsonIgnore
+    @JsonInclude(value = JsonInclude.Include.NON_NULL)
     private String code;
 
 
     /**
      * 当前点位树配置分发到哪几个kafka当中去(边缘端上送数据使用)
      */
+    @JsonInclude(value = JsonInclude.Include.NON_NULL)
     private List<String> topicList;
 
 
@@ -99,19 +99,19 @@ public class EventBean {
         this.deviceChannel = deviceChannel;
     }
 
-    public String getDeviceTimestamp() {
-        return deviceTimestamp;
-    }
-
-    public void setDeviceTimestamp(String deviceTimestamp) {
-        this.deviceTimestamp = deviceTimestamp;
-    }
-
     public String getBatchId() {
         return batchId;
     }
 
     public void setBatchId(String batchId) {
         this.batchId = batchId;
+    }
+
+    public Long getDeviceTimeStamp() {
+        return deviceTimestamp;
+    }
+
+    public void setDeviceTimeStamp(Long deviceTimestamp) {
+        this.deviceTimestamp = deviceTimestamp;
     }
 }

@@ -16,6 +16,8 @@
         <lang3.version>3.11</lang3.version>
         <kafka.version>3.4.0</kafka.version>
         <drools.version>7.23.0.Final</drools.version>
+        <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
+        <spring.cloud.version>2.2.9.RELEASE</spring.cloud.version>
     </properties>
 
     <dependencies>
@@ -167,6 +169,47 @@
             <artifactId>flink-metrics-prometheus</artifactId>
             <version>1.16.1</version>
         </dependency>
+
+
+        <dependency>
+            <groupId>io.github.ck-jesse</groupId>
+            <artifactId>l2cache-spring-boot-starter</artifactId>
+            <version>1.0.39</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                    <groupId>org.springframework.boot</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-cloud-context</artifactId>
+                    <groupId>org.springframework.cloud</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring-boot.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                    <groupId>org.springframework.boot</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+
+            </exclusions>
+
+        </dependency>
+        <dependency>
+            <artifactId>spring-cloud-context</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+            <version>${spring.cloud.version}</version>
+        </dependency>
+
     </dependencies>
 
 </project>

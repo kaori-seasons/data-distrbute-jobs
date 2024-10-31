@@ -20,18 +20,23 @@ public class PointDataTypeInfoFactory extends TypeInfoFactory<PointData> {
             Type t, Map<String, TypeInformation<?>> genericParameters) {
 
         return Types.POJO(PointData.class, new HashMap<String, TypeInformation<?>>() { {
+            put("pointId",Types.STRING);
+            put("deviceChannel", Types.STRING);
+            put("origin", Types.STRING);
+            put("code", Types.STRING);
+            put("topicList", Types.LIST(Types.GENERIC(String.class)));
             put("pageNum", Types.INT);
-            put("pageBatchID", Types.STRING);
+            put("batchId", Types.STRING);
             put("time", Types.LONG);
-            put("deviceTimestamp", Types.SQL_TIMESTAMP);
+            put("deviceTimestamp", Types.LONG);
             put("deviceTime", Types.LOCAL_DATE);
             put("bandSpectrum", Types.STRING);
             put("mean", Types.INT);
-            put("meanHf", Types.STRING);
-            put("meanLf", Types.STRING);
+            put("meanHf", Types.LONG);
+            put("meanLf", Types.INT);
             put("peakFreqs", Types.STRING);
             put("peakPowers", Types.STRING);
-            put("std", Types.STRING);
+            put("std", Types.INT);
             put("speed", Types.STRING);
             put("originalVibrate", Types.STRING);
             put("status", Types.INT);

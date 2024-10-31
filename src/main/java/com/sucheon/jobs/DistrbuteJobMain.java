@@ -1,29 +1,32 @@
 package com.sucheon.jobs;
 
 import com.alibaba.fastjson.JSON;
+import com.sucheon.jobs.config.UserProperties;
 import com.sucheon.jobs.event.*;
 import com.sucheon.jobs.functions.*;
 import com.sucheon.jobs.partitioner.CustomPartitioner;
-import com.sucheon.jobs.serializtion.JsonSerializationSchema;
 import com.sucheon.jobs.sink.FlinkKafkaMutliSink;
 import com.sucheon.jobs.state.StateDescContainer;
+import com.sucheon.jobs.utils.InternalTypeUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.state.StateDescriptor;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.jsonschema.JsonSerializableSchema;
 import org.apache.flink.streaming.api.datastream.*;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducerBase;
-import org.apache.flink.streaming.connectors.kafka.internals.KeyedSerializationSchemaWrapper;
 import org.apache.flink.streaming.util.serialization.KeyedSerializationSchema;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
+import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
+import org.springframework.context.ConfigurableApplicationContext;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
+
+import static com.sucheon.jobs.utils.InternalTypeUtils.iaAllFieldsNull;
 
 /**
  * 对两种数据进行处理 1.算法组回传的数据 2.边缘端上送的数据
@@ -37,6 +40,9 @@ import java.util.Properties;
  * //其他字段 扁平
  * }
  */
+@Slf4j
+@SpringBootApplication(exclude = {GsonAutoConfiguration.class, JacksonAutoConfiguration.class,
+        HttpMessageConvertersAutoConfiguration.class})
 public class DistrbuteJobMain {
 
 
@@ -67,18 +73,25 @@ public class DistrbuteJobMain {
          * 3.算法实例和算法实例联动
          *
          */
+        System.setProperty("spring.devtools.restart.enabled", "false");
+        ConfigurableApplicationContext applicationContext = SpringApplication.run(DistrbuteJobMain.class, args);
+
+        //get properties pojo
+        UserProperties ddpsKafkaProperties = applicationContext.getBean(UserProperties.class);
 
         Properties properties = new Properties();
-        properties.setProperty("bootstrap.servers","192.168.3.48:30092");
-        properties.setProperty("auto.offset.reset", "true");
+        properties.setProperty("bootstrap.servers", ddpsKafkaProperties.getBootStrapServers());
+        properties.setProperty("auto.offset.reset", ddpsKafkaProperties.getAutoOffsetReset());
+        properties.setProperty("fetch.max.bytes", ddpsKafkaProperties.getFetchMaxBytes());
+        properties.setProperty("auto.create.topics", ddpsKafkaProperties.getAutoCreateTopics());
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.setParallelism(1);
 
         KafkaSourceBuilder kafkaSourceBuilder = new KafkaSourceBuilder();
-        DataStream<String> algResult = env.fromSource(kafkaSourceBuilder.newBuild("iot_kv_main", "test1", properties), WatermarkStrategy.noWatermarks(), "iot-data");
+        DataStream<String> algResult = env.fromSource(kafkaSourceBuilder.newBuild(ddpsKafkaProperties.getAlgSourceTopic(), ddpsKafkaProperties.getAlgSourceGroup(), properties), WatermarkStrategy.noWatermarks(), "iot-data");
         algResult =  algResult.map(new LabelAlgResultMapFunction());
-        DataStream<String> iotResult = env.fromSource(kafkaSourceBuilder.newBuild("alg_kv_main", "test1", properties), WatermarkStrategy.noWatermarks(), "alg-data");
+        DataStream<String> iotResult = env.fromSource(kafkaSourceBuilder.newBuild(ddpsKafkaProperties.getIotSourceTopic(), ddpsKafkaProperties.getIotSourceGroup(), properties), WatermarkStrategy.noWatermarks(), "alg-data");
         iotResult = iotResult.map(new LabelIotResultMapFunction());
         algResult = algResult.union(iotResult);
         //json解析
@@ -90,15 +103,67 @@ public class DistrbuteJobMain {
                 .withTimestampAssigner(new SerializableTimestampAssigner<PointData>() {
                     @Override
                     public long extractTimestamp(PointData pointTree, long l) {
-                        return pointTree.getDeviceTimeStamp().getTime();
+                        Long deviceTimestamp = pointTree.getDeviceTimeStamp();
+                        long currentWatermark = 0L;
+                        if (deviceTimestamp != null) {
+                            currentWatermark = deviceTimestamp;
+                        }else {
+                            currentWatermark = LocalDateTime.now(ZoneOffset.of("+8")).toInstant(ZoneOffset.of("+8")).toEpochMilli();
+                        }
+
+                        return currentWatermark;
                     }
                 });
 
         SingleOutputStreamOperator<PointData> pointTreeWithWatermark = pointTreeDataStream.assignTimestampsAndWatermarks(watermarkStrategy);
 
 
-        //读取kafka中规则操作数据流canal binlog 仅针对算法侧使用的配置流
-        DataStream<String> ruleBinlogs = env.addSource(kafkaSourceBuilder.build("topic-xxx"));
+
+        //FIXME 读取kafka中规则操作数据流canal binlog 仅针对算法侧使用的配置流
+        // DataStream<String> ruleBinlogs = env.addSource(kafkaSourceBuilder.build("topic-xxx"));
+
+        //仅边缘端数据测试临时使用
+        DataStream<String> ruleBinlogs = env.fromCollection(Arrays.asList("{\n" +
+                "  \"code\": 111,\n" +
+                "  \"fields\":[\t\t\t\n" +
+                "     {\n" +
+                "        \"key\":\"feature1\",\t\n" +
+                "        \"point_id\":1,\t\t\n" +
+                "        \"instance_id\":1,\t\t\n" +
+                "        \"group\":\"1\"\n" +
+                "     }\n" +
+                "    ],\n" +
+                "    \"timestamp\": 1730096789,\n" +
+                "    \"topicList\": [\"iot_kv_main\"],\n" +
+                "    \"algGroup\": \"\"\n" +
+                "}","{\n" +
+                "    \"code\": 111,\n" +
+                "    \"fields\":[\t\t\t\n" +
+                "       {\n" +
+                "          \"key\":\"feature2\",\t\n" +
+                "          \"point_id\":2,\t\t\n" +
+                "          \"instance_id\":1,\t\t\n" +
+                "          \"group\":\"1\"\n" +
+                "       }\n" +
+                "      ],\n" +
+                "      \"timestamp\": 1730096789,\n" +
+                "      \"topicList\": [\"iot_kv_main\"],\n" +
+                "      \"algGroup\": \"\"\n" +
+                "  }","{\n" +
+                "    \"code\": 112,\n" +
+                "    \"fields\":[\t\t\t\n" +
+                "       {\n" +
+                "          \"key\":\"feature1\",\t\n" +
+                "          \"point_id\":1,\t\t\n" +
+                "          \"instance_id\":1,\t\t\n" +
+                "          \"group\":\"1\"\n" +
+                "       }\n" +
+                "      ],\n" +
+                "      \"timestamp\": 1730096790,\n" +
+                "      \"topicList\": [\"iot_kv_main\"],\n" +
+                "      \"algGroup\": \"\"\n" +
+                "  }"));
+
         //解析用户下发的规则配置
         DataStream<PointTree> canalLogBeands =  ruleBinlogs.map(s -> JSON.parseObject(s, PointTree.class)).returns(PointTree.class);
         BroadcastStream<PointTree> ruleBroadcast = canalLogBeands.broadcast(StateDescContainer.ruleStateDesc);
@@ -122,27 +187,26 @@ public class DistrbuteJobMain {
 
         KeyedSerializationSchema<RuleMatchResult> routeDistrute = new KeyedSerializationSchema<RuleMatchResult>() {
             @Override
-            public byte[] serializeKey(RuleMatchResult algResult) {
-                return algResult.toByteArray();
+            public byte[] serializeKey(RuleMatchResult data) {
+               return InternalTypeUtils.transferData(data);
             }
 
             @Override
-            public byte[] serializeValue(RuleMatchResult algResult) {
-                return algResult.toByteArray();
+            public byte[] serializeValue(RuleMatchResult data) {
+                return InternalTypeUtils.transferData(data);
             }
 
             @Override
             public String getTargetTopic(RuleMatchResult algResult) {
-                if (Objects.isNull(algResult)) {
+                if (algResult == null) {
                     return "default-topic";
                 }
-                return algResult.getTopic();
+
+               return algResult.getTopic();
             }
         };
 
-
-        //todo需要维护每个topic分发到每个分区的逻辑嘛 通过hash打散还是重平衡
-        FlinkKafkaMutliSink distrbuteSink = new FlinkKafkaMutliSink("default-topic", routeDistrute, properties, new CustomPartitioner(new HashMap<String, Integer>()));
+        FlinkKafkaMutliSink distrbuteSink = new FlinkKafkaMutliSink("default-topic", routeDistrute, properties, new CustomPartitioner());
 
         //匹配的算法结果输出到kafka
         ruleMatchResultDataStream.addSink(distrbuteSink);

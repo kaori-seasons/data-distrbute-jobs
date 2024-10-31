@@ -30,7 +30,7 @@ public class PointTree {
      * }
      * ]
      */
-    private List<AlgFieldList> fieldList;
+    private List<AlgFieldList> fields;
 
 
     /**
@@ -46,7 +46,13 @@ public class PointTree {
 
 
     /**
-     * 用户所配置的算法组策略
+     * 用户所配置的算法组
      */
     private String algGroup;
+
+    /**
+     * 需要从后端的广播流订阅<算法实例，算法组>的映射关系
+     */
+
+
 }

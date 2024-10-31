@@ -17,6 +17,7 @@ import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDe
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 import org.apache.flink.streaming.connectors.kafka.internals.KafkaDeserializationSchemaWrapper;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -51,7 +52,7 @@ public class KafkaSourceBuilder {
                 .setTopicPattern(Pattern.compile(topic))
                 .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
-                .setDeserializer(KafkaRecordDeserializationSchema.of(deserSchema))
+                .setDeserializer(KafkaRecordDeserializationSchema.valueOnly(StringDeserializer.class))
                 .build();
         return source;
     }

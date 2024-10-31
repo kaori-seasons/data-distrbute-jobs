@@ -22,20 +22,11 @@ public class PointData extends EventBean{
      */
     private Integer pageNum;
 
-    /**
-     * 时间戳(秒级)_策略ID，默认值为空字符串
-     */
-    private String pageBatchID;
 
     /**
      * 上送的点位数据事件时间
      */
     private Long time;
-
-    /**
-     * 上报的点位时间戳 (每一秒会产生许多数据，其中一帧的时间戳)
-     */
-    private Timestamp deviceTimeStamp;
 
     /**
      * 上报的设备采样时间，抹掉毫秒
